@@ -42,7 +42,7 @@ jobs:
       - name: Build image
         run: docker build -t identity-service:${{ github.sha }} .
       - name: Scan image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: identity-service:${{ github.sha }}
           severity: CRITICAL,HIGH
