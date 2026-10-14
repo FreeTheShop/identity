@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build: official Maven image (no wrapper needed). Run: JRE only, non-root, layered for small rebuilds.
-FROM maven:3.9.11-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /src
 COPY pom.xml dependency-check-suppressions.xml ./
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q dependency:go-offline
