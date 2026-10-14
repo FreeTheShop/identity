@@ -23,7 +23,7 @@
         <springdoc.version>3.1.1</springdoc.version>
         <bucket4j.version>8.20.0</bucket4j.version>
         <bouncycastle.version>1.86</bouncycastle.version>
-        <cucumber.version>7.34.9</cucumber.version>
+        <cucumber.version>8.0.4</cucumber.version>
         <archunit.version>1.5.0</archunit.version>
         <dependency-check.version>13.0.0</dependency-check.version>
     </properties>
