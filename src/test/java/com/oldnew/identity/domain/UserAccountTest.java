@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UserAccountTest {
 
@@ -97,10 +99,33 @@ class UserAccountTest {
     }
 
     @Test
-    void customerRoleCannotBeLostWhenRebuiltFromStorage() {
-        UserAccount account = UserAccount.reconstitute(UserId.newId(), EmailAddress.of("bob@example.com"),
-                new PasswordHash("{argon2id}hash"), java.util.Set.of(Role.ADMIN), 0, null, NOW, 3L);
+    void staffAccountHasOnlyItsStaffRoles() {
+        UserAccount account = UserAccount.createStaff(UserId.newId(), EmailAddress.of("Cat@Example.com"),
+                new PasswordHash("{argon2id}hash"), Set.of(Role.CATALOG_MANAGER), NOW);
 
-        assertThat(account.roles()).containsExactlyInAnyOrder(Role.ADMIN, Role.CUSTOMER);
+        assertThat(account.roles()).containsExactly(Role.CATALOG_MANAGER);
+        assertThat(account.isLockedAt(NOW)).isFalse();
+    }
+
+    @Test
+    void staffAccountIsNeverACustomer() {
+        assertThatThrownBy(() -> UserAccount.createStaff(UserId.newId(), EmailAddress.of("cat@example.com"),
+                new PasswordHash("{argon2id}hash"), Set.of(Role.ADMIN, Role.CUSTOMER), NOW))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void anAccountNeedsAtLeastOneRole() {
+        assertThatThrownBy(() -> UserAccount.createStaff(UserId.newId(), EmailAddress.of("cat@example.com"),
+                new PasswordHash("{argon2id}hash"), Set.of(), NOW))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rolesAreRebuiltFromStorageAsStored() {
+        UserAccount account = UserAccount.reconstitute(UserId.newId(), EmailAddress.of("bob@example.com"),
+                new PasswordHash("{argon2id}hash"), Set.of(Role.ADMIN, Role.ACCOUNT_CREATOR), 0, null, NOW, 3L);
+
+        assertThat(account.roles()).containsExactlyInAnyOrder(Role.ADMIN, Role.ACCOUNT_CREATOR);
     }
 }

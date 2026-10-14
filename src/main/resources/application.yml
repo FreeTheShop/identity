@@ -1,4 +1,5 @@
 # Safe defaults for every environment. Profiles (dev, prod) and environment variables override.
+# Every instance also runs exactly one of the profiles customer or staff (ADR-0009), which register its clients.
 # Secrets come only from environment variables or files under /run/secrets (configtree); never commit one.
 spring:
   application:
@@ -23,41 +24,7 @@ spring:
     oauth2:
       authorizationserver:
         issuer: ${IDENTITY_ISSUER:http://localhost:9000}
-        client:
-          admin-ui:
-            registration:
-              client-id: admin-ui
-              client-authentication-methods: [none]          # public client: PKCE instead of a secret
-              authorization-grant-types: [authorization_code]
-              redirect-uris: ${ADMIN_UI_REDIRECT_URIS:http://localhost:3000/callback}
-              scopes: [openid, product:read, product:write]
-            require-proof-key: true
-            require-authorization-consent: false              # first-party app
-            token:
-              access-token-time-to-live: 10m
-              id-token-signature-algorithm: ES256
-          client-ui:
-            registration:
-              client-id: client-ui
-              client-authentication-methods: [none]
-              authorization-grant-types: [authorization_code]
-              redirect-uris: ${CLIENT_UI_REDIRECT_URIS:http://localhost:3001/callback}
-              scopes: [openid, product:read]
-            require-proof-key: true
-            require-authorization-consent: false
-            token:
-              access-token-time-to-live: 10m
-              id-token-signature-algorithm: ES256
-          price-service:
-            registration:
-              client-id: price-service
-              # An "{argon2id}$argon2id$..." hash from a secret. See README "Client secrets".
-              client-secret: ${PRICE_SERVICE_CLIENT_SECRET}
-              client-authentication-methods: [client_secret_basic]
-              authorization-grant-types: [client_credentials]
-              scopes: [product:internal]
-            token:
-              access-token-time-to-live: 10m
+        # Clients live in application-customer.yml and application-staff.yml (ADR-0009).
 
 server:
   port: 9000
@@ -122,8 +89,16 @@ identity:
   token:
     audience-by-scope-prefix:
       product: product-service
+      price: price-service
+      validation: validation-service
+      admin-core: admin-core-service
+      admin-aggregator: admin-aggregator-service
+      client-core: client-core-service
+      client-aggregator: client-aggregator-service
   security:
     allow-plaintext-client-secrets: false
+  cors:
+    allowed-origins: []
   rate-limits:
     - name: login
       method: POST

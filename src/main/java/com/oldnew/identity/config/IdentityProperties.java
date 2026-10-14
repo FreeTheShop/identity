@@ -18,7 +18,8 @@ public record IdentityProperties(
         Token token,
         List<RateLimitRule> rateLimits,
         Security security,
-        BootstrapAdmin bootstrapAdmin) {
+        BootstrapAdmin bootstrapAdmin,
+        Cors cors) {
 
     /**
      * @param keysDir            directory with one private JWK (*.json) per signing key, mounted from a secret
@@ -42,6 +43,16 @@ public record IdentityProperties(
      * @param allowPlaintextClientSecrets dev/test only: accept "{noop}" client secrets. Refused in prod.
      */
     public record Security(boolean allowPlaintextClientSecrets) {
+    }
+
+    /**
+     * @param allowedOrigins browser apps (the UIs) allowed to call the OAuth2 endpoints from JavaScript:
+     *                       discovery, JWKS and the token exchange. Empty = none.
+     */
+    public record Cors(List<String> allowedOrigins) {
+        public Cors {
+            allowedOrigins = allowedOrigins == null ? List.of() : List.copyOf(allowedOrigins);
+        }
     }
 
     /** Optional first admin, created at startup if absent. Supply both values from secrets, never from Git. */

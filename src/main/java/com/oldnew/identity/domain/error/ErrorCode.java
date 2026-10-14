@@ -8,6 +8,8 @@ public enum ErrorCode {
     INVALID_EMAIL(ErrorKind.INVALID_INPUT),
     WEAK_PASSWORD(ErrorKind.INVALID_INPUT),
     INVALID_USER_ID(ErrorKind.INVALID_INPUT),
+    /** An account creator asked for a role they may not hand out (ADR-0009). */
+    ROLE_NOT_ASSIGNABLE(ErrorKind.INVALID_INPUT),
     EMAIL_ALREADY_REGISTERED(ErrorKind.CONFLICT),
     CONCURRENT_UPDATE(ErrorKind.CONFLICT),
     USER_NOT_FOUND(ErrorKind.NOT_FOUND);

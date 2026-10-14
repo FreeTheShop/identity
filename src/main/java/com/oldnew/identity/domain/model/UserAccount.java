@@ -11,7 +11,8 @@ import java.util.Set;
  * <p>
  * Invariants:
  * <ul>
- *     <li>Every account has at least the CUSTOMER role.</li>
+ *     <li>Every account has at least one role. Self-signed-up accounts are CUSTOMER; staff accounts are never
+ *         CUSTOMER (ADR-0009).</li>
  *     <li>An account is locked once failed sign-ins reach the policy limit, until the lock expires.</li>
  *     <li>A successful sign-in clears the failure count.</li>
  * </ul>
@@ -33,8 +34,10 @@ public final class UserAccount {
         this.id = Objects.requireNonNull(id, "id");
         this.email = Objects.requireNonNull(email, "email");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
-        this.roles = roles.isEmpty() ? EnumSet.noneOf(Role.class) : EnumSet.copyOf(roles);
-        this.roles.add(Role.CUSTOMER);
+        if (roles.isEmpty()) {
+            throw new IllegalArgumentException("an account needs at least one role");
+        }
+        this.roles = EnumSet.copyOf(roles);
         if (failedLoginAttempts < 0) {
             throw new IllegalArgumentException("failedLoginAttempts must not be negative");
         }
@@ -44,9 +47,18 @@ public final class UserAccount {
         this.version = version;
     }
 
-    /** A brand-new account. Every new account is a CUSTOMER. */
+    /** A person signed themselves up: always a CUSTOMER, nothing else. */
     public static UserAccount register(UserId id, EmailAddress email, PasswordHash passwordHash, Instant now) {
         return new UserAccount(id, email, passwordHash, EnumSet.of(Role.CUSTOMER), 0, null, now, null);
+    }
+
+    /** A staff account, created for someone else. Staff are never customers. */
+    public static UserAccount createStaff(UserId id, EmailAddress email, PasswordHash passwordHash, Set<Role> roles,
+                                          Instant now) {
+        if (roles.contains(Role.CUSTOMER)) {
+            throw new IllegalArgumentException("a staff account cannot be a CUSTOMER");
+        }
+        return new UserAccount(id, email, passwordHash, roles, 0, null, now, null);
     }
 
     /** Rebuild from storage. Only persistence adapters call this. */

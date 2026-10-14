@@ -9,11 +9,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** The whole app on a mock servlet environment, real MongoDB, "test" profile. */
+/**
+ * The whole app on a mock servlet environment, real MongoDB, "test" profile, running as the Customer Identity
+ * (ADR-0009). For the Staff Identity use {@link StaffIntegrationTest}.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles({"customer", "test"})
 @Import(TestcontainersConfiguration.class)
 public @interface IntegrationTest {
 }

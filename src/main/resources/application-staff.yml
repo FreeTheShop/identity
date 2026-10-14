@@ -1,0 +1,52 @@
+# The Staff Identity (ADR-0009): the Admin UI and the services' own tokens. No sign-up: an ACCOUNT_CREATOR
+# creates staff accounts, and the first admin comes from identity.bootstrap-admin.
+# Runs alongside the Customer Identity from the same image; never activate both profiles.
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${IDENTITY_ISSUER:http://localhost:9001}
+        client:
+          admin-ui:
+            registration:
+              client-id: admin-ui
+              client-authentication-methods: [none]          # public client: PKCE instead of a secret
+              authorization-grant-types: [authorization_code]
+              redirect-uris: ${ADMIN_UI_REDIRECT_URIS:http://localhost:3000/callback}
+              # Sign out ends the Identity session at /connect/logout, then returns here (and only here).
+              post-logout-redirect-uris: ${ADMIN_UI_POST_LOGOUT_REDIRECT_URIS:http://localhost:3000/}
+              # The aggregator relays the user's token to Admin Core and Product, so the token needs their scopes too.
+              scopes: [openid, email, product:read, product:write, admin-aggregator:read, admin-core:read]
+            require-proof-key: true
+            require-authorization-consent: false              # first-party app
+            token:
+              access-token-time-to-live: 10m
+              id-token-signature-algorithm: ES256
+          price-service:
+            registration:
+              client-id: price-service
+              # An "{argon2id}$argon2id$..." hash from a secret. See README "Client secrets".
+              client-secret: ${PRICE_SERVICE_CLIENT_SECRET}
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              # price:read: the service's own status check. Real callers of Price get it in Sprint 5.
+              scopes: [product:internal, price:read]
+            token:
+              access-token-time-to-live: 10m
+          validation-service:
+            registration:
+              client-id: validation-service
+              client-secret: ${VALIDATION_SERVICE_CLIENT_SECRET}
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              # validation:read: the service's own status check. Real callers of Validation get it in Sprint 6.
+              scopes: [product:internal, validation:read]
+            token:
+              access-token-time-to-live: 10m
+server:
+  port: 9001                     # so both instances also run side by side outside Docker
+  servlet:
+    session:
+      cookie:
+        # Its own name: browsers share cookies across ports, so on localhost the two instances would clash.
+        name: OLDNEW_STAFF_SESSION

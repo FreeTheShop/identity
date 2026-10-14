@@ -1,0 +1,28 @@
+# The Customer Identity (ADR-0009): shoppers sign themselves up and sign in to the Client UI.
+# Runs alongside the Staff Identity from the same image; never activate both profiles.
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          client-ui:
+            registration:
+              client-id: client-ui
+              client-authentication-methods: [none]          # public client: PKCE instead of a secret
+              authorization-grant-types: [authorization_code]
+              redirect-uris: ${CLIENT_UI_REDIRECT_URIS:http://localhost:3001/callback}
+              # Sign out ends the Identity session at /connect/logout, then returns here (and only here).
+              post-logout-redirect-uris: ${CLIENT_UI_POST_LOGOUT_REDIRECT_URIS:http://localhost:3001/}
+              # The aggregator relays the user's token to Client Core and Product, so the token needs their scopes too.
+              scopes: [openid, email, product:read, client-aggregator:read, client-core:read]
+            require-proof-key: true
+            require-authorization-consent: false              # first-party app
+            token:
+              access-token-time-to-live: 10m
+              id-token-signature-algorithm: ES256
+server:
+  servlet:
+    session:
+      cookie:
+        # Its own name: browsers share cookies across ports, so on localhost the two instances would clash.
+        name: OLDNEW_CUSTOMER_SESSION

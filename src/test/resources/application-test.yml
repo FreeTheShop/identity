@@ -1,11 +1,20 @@
+# Combined with the customer or staff profile (support/IntegrationTest, StaffIntegrationTest).
+# The service clients' secrets, read by application-staff.yml.
+PRICE_SERVICE_CLIENT_SECRET: "{noop}test-price-secret"
+VALIDATION_SERVICE_CLIENT_SECRET: "{noop}test-validation-secret"
 spring:
   security:
     oauth2:
       authorizationserver:
         client:
-          price-service:
+          # Test only, on both instances: can ask for every service's read scope, so TokenIssuanceIT checks each scope's audience.
+          scope-probe:
             registration:
-              client-secret: "{noop}test-price-secret"
+              client-id: scope-probe
+              client-secret: "{noop}test-probe-secret"
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              scopes: [price:read, validation:read, admin-core:read, admin-aggregator:read, client-core:read, client-aggregator:read]
 server:
   servlet:
     session:
@@ -24,6 +33,8 @@ identity:
     allow-ephemeral-keys: true
   security:
     allow-plaintext-client-secrets: true
+  cors:
+    allowed-origins: [http://localhost:3000]
   rate-limits:
     - name: login
       method: POST

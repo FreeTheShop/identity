@@ -17,7 +17,10 @@ COPY --from=build /src/extracted/spring-boot-loader/ ./
 COPY --from=build /src/extracted/snapshot-dependencies/ ./
 COPY --from=build /src/extracted/application/ ./
 USER app
+# Add the instance when running it (ADR-0009): SPRING_PROFILES_ACTIVE=prod,customer or prod,staff.
+# With neither, Identity refuses to start.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError" \
     SPRING_PROFILES_ACTIVE=prod
-EXPOSE 9000 8081
+# 9000: Customer Identity, 9001: Staff Identity, 8081: actuator
+EXPOSE 9000 9001 8081
 ENTRYPOINT ["java", "-jar", "application.jar"]

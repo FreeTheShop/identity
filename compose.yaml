@@ -1,5 +1,5 @@
-# Just this service's database, for `mvn spring-boot:run -Dspring-boot.run.profiles=dev`.
-# To run the whole ecosystem locally, use ../../local-dev/compose.yaml instead.
+# Just this service's database, for `mvn spring-boot:run -Dspring-boot.run.profiles=dev,customer` (or dev,staff).
+# To run the whole ecosystem locally, use ../../platform/local-dev/compose.yaml instead.
 services:
   mongo:
     image: ${MONGO_IMAGE:-mongo:7.0}   # 8.x fails on kernels 6.19-7.0.13 (SERVER-121912); set MONGO_IMAGE=mongo:8.0 once fixed

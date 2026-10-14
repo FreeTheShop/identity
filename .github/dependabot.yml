@@ -4,9 +4,19 @@ updates:
     directory: /
     schedule: { interval: weekly }
     open-pull-requests-limit: 5
+    ignore:
+      # Major upgrades are planned work, not weekly bumps.
+      - dependency-name: "io.cucumber:*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly }
+    ignore:
+      # The platform is on Java 21 (LTS). Move JDKs on purpose, not via a bot.
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      # Tags like 3.9.11-eclipse-temurin-21 hide the JDK in the suffix, so updates can silently switch JDK.
+      - dependency-name: "maven"
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
