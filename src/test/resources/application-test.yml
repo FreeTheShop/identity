@@ -1,0 +1,32 @@
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          price-service:
+            registration:
+              client-secret: "{noop}test-price-secret"
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+management:
+  tracing:
+    sampling:
+      probability: 0.0
+springdoc:
+  api-docs:
+    enabled: true
+identity:
+  jwt:
+    keys-dir: target/no-keys
+    allow-ephemeral-keys: true
+  security:
+    allow-plaintext-client-secrets: true
+  rate-limits:
+    - name: login
+      method: POST
+      path-prefix: /login
+      capacity: 1000
+      period: 1m

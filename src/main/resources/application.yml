@@ -1,0 +1,149 @@
+# Safe defaults for every environment. Profiles (dev, prod) and environment variables override.
+# Secrets come only from environment variables or files under /run/secrets (configtree); never commit one.
+spring:
+  application:
+    name: identity-service
+  config:
+    import: optional:configtree:/run/secrets/
+  threads:
+    virtual:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  mvc:
+    problemdetails:
+      enabled: true
+  mongodb:
+    # Timeouts keep a sick database from hanging requests. retryWrites/retryReads are on by default.
+    uri: ${MONGODB_URI:mongodb://localhost:27017/identity?serverSelectionTimeoutMS=2000&connectTimeoutMS=2000&socketTimeoutMS=5000}
+  data:
+    mongodb:
+      auto-index-creation: false   # indexes are created in code (MongoIndexes)
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${IDENTITY_ISSUER:http://localhost:9000}
+        client:
+          admin-ui:
+            registration:
+              client-id: admin-ui
+              client-authentication-methods: [none]          # public client: PKCE instead of a secret
+              authorization-grant-types: [authorization_code]
+              redirect-uris: ${ADMIN_UI_REDIRECT_URIS:http://localhost:3000/callback}
+              scopes: [openid, product:read, product:write]
+            require-proof-key: true
+            require-authorization-consent: false              # first-party app
+            token:
+              access-token-time-to-live: 10m
+              id-token-signature-algorithm: ES256
+          client-ui:
+            registration:
+              client-id: client-ui
+              client-authentication-methods: [none]
+              authorization-grant-types: [authorization_code]
+              redirect-uris: ${CLIENT_UI_REDIRECT_URIS:http://localhost:3001/callback}
+              scopes: [openid, product:read]
+            require-proof-key: true
+            require-authorization-consent: false
+            token:
+              access-token-time-to-live: 10m
+              id-token-signature-algorithm: ES256
+          price-service:
+            registration:
+              client-id: price-service
+              # An "{argon2id}$argon2id$..." hash from a secret. See README "Client secrets".
+              client-secret: ${PRICE_SERVICE_CLIENT_SECRET}
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              scopes: [product:internal]
+            token:
+              access-token-time-to-live: 10m
+
+server:
+  port: 9000
+  shutdown: graceful
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:true}
+        same-site: lax
+      timeout: 30m
+
+management:
+  server:
+    port: 8081            # never expose this port publicly
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState,mongo
+  otlp:
+    metrics:
+      export:
+        enabled: false     # metrics go to Prometheus (/actuator/prometheus); OTLP is used for traces only
+  tracing:
+    sampling:
+      probability: 0.1
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+  paths-to-match: /api/**
+
+identity:
+  jwt:
+    keys-dir: ${IDENTITY_JWT_KEYS_DIR:/run/secrets/jwt}
+    active-key-id: ${IDENTITY_JWT_ACTIVE_KEY_ID:}
+    allow-ephemeral-keys: false
+  lockout:
+    max-failed-attempts: 5
+    lock-duration: 15m
+  token:
+    audience-by-scope-prefix:
+      product: product-service
+  security:
+    allow-plaintext-client-secrets: false
+  rate-limits:
+    - name: login
+      method: POST
+      path-prefix: /login
+      capacity: 10
+      period: 1m
+    - name: token
+      method: POST
+      path-prefix: /oauth2/token
+      capacity: 10
+      period: 1m
+    - name: register
+      method: POST
+      path-prefix: /api/v1/users
+      capacity: 10
+      period: 1m
+    - name: api
+      path-prefix: /api/
+      capacity: 100
+      period: 1m
+  bootstrap-admin:
+    email: ${IDENTITY_BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${IDENTITY_BOOTSTRAP_ADMIN_PASSWORD:}

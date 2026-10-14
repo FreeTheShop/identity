@@ -1,0 +1,41 @@
+# Local development only. Never activate in a shared environment.
+spring:
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          price-service:
+            registration:
+              client-secret: "{noop}dev-price-secret"
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+management:
+  otlp:
+    metrics:
+      export:
+        # Dev only: push metrics to the local Grafana stack (local-dev/observability.yaml).
+        enabled: ${OTLP_METRICS_ENABLED:true}
+        url: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://localhost:4318/v1/metrics}
+        step: 15s
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}   # set to 0 when no OTLP collector is running
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+identity:
+  jwt:
+    allow-ephemeral-keys: true
+  security:
+    allow-plaintext-client-secrets: true
+  bootstrap-admin:
+    email: ${IDENTITY_BOOTSTRAP_ADMIN_EMAIL:admin@oldnew.local}
+    password: ${IDENTITY_BOOTSTRAP_ADMIN_PASSWORD:dev-only-admin-password}
+logging:
+  level:
+    com.oldnew: DEBUG

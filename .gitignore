@@ -1,0 +1,18 @@
+target/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+secrets/
+*.jwk.json
+
+# Signing keys and other secrets must never be committed.
+# Keep generated keys in secrets/ (ignored above); these catch strays.
+identity-*.json
+*-key.json
+*.pem
+*.key
+*.p12
+*.jks
+.env
+.env.*

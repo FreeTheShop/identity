@@ -1,0 +1,19 @@
+# Production. Every secret placeholder without a default must be supplied, or startup fails (on purpose).
+server:
+  forward-headers-strategy: native
+  servlet:
+    session:
+      cookie:
+        secure: true
+logging:
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        name: identity-service
+identity:
+  jwt:
+    allow-ephemeral-keys: false
+  security:
+    allow-plaintext-client-secrets: false
