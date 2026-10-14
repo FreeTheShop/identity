@@ -24,7 +24,7 @@
         <bucket4j.version>8.20.0</bucket4j.version>
         <bouncycastle.version>1.86</bouncycastle.version>
         <cucumber.version>7.34.9</cucumber.version>
-        <archunit.version>1.5.0</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
         <dependency-check.version>13.0.0</dependency-check.version>
     </properties>
 
