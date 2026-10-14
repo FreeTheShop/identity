@@ -21,7 +21,7 @@
         <java.version>21</java.version>
         <!-- Pinned outside the Boot BOM. Checked for known CVEs on 2026-10-08; see docs/adr/0005. -->
         <springdoc.version>3.1.1</springdoc.version>
-        <bucket4j.version>8.20.0</bucket4j.version>
+        <bucket4j.version>8.21.0</bucket4j.version>
         <bouncycastle.version>1.86</bouncycastle.version>
         <cucumber.version>7.34.9</cucumber.version>
         <archunit.version>1.5.0</archunit.version>
