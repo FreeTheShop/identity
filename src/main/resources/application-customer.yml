@@ -18,7 +18,7 @@ spring:
             require-proof-key: true
             require-authorization-consent: false              # first-party app
             token:
-              access-token-time-to-live: 10m
+              access-token-time-to-live: 30m
               id-token-signature-algorithm: ES256
 server:
   servlet:

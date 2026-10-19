@@ -2,6 +2,8 @@
 # The service clients' secrets, read by application-staff.yml.
 PRICE_SERVICE_CLIENT_SECRET: "{noop}test-price-secret"
 VALIDATION_SERVICE_CLIENT_SECRET: "{noop}test-validation-secret"
+ADMIN_AGGREGATOR_SERVICE_CLIENT_SECRET: "{noop}test-admin-aggregator-secret"
+CLIENT_AGGREGATOR_SERVICE_CLIENT_SECRET: "{noop}test-client-aggregator-secret"
 spring:
   security:
     oauth2:

@@ -83,15 +83,19 @@ Registered per instance in `application-customer.yml` and `application-staff.yml
 | Client | Instance | Grant | Scopes |
 | --- | --- | --- | --- |
 | `client-ui` | Customer | Authorization code + PKCE (public) | `openid email product:read client-aggregator:read client-core:read` |
-| `admin-ui` | Staff | Authorization code + PKCE (public) | `openid email product:read product:write admin-aggregator:read admin-core:read` |
+| `admin-ui` | Staff | Authorization code + PKCE (public) | `openid email product:read product:write admin-aggregator:read admin-aggregator:write admin-core:read admin-core:write` |
 | `price-service` | Staff | Client credentials | `product:internal price:read` |
-| `validation-service` | Staff | Client credentials | `product:internal validation:read` |
+| `validation-service` | Staff | Client credentials | `product:internal validation:read price:internal` (reads the price at checkout time) |
+| `admin-aggregator-service` | Staff | Client credentials | `admin-core:internal` (the SKU sync job reads Admin Core's changes) |
+| `client-aggregator-service` | Staff | Client credentials | `product:internal client-core:internal` (reads Product, writes the shop in Client Core) |
 
 The service clients live on the Staff Identity: it has no public sign-up, so it is the smaller target.
 
 A UI asks for its aggregator's scope plus the scopes of the services the aggregator relays the user's token to.
 The `price:read` and `validation:read` scopes on the services' own clients exist for the Sprint 2 status checks;
 the real callers of Price and Validation get them when those services are built (Sprints 5 and 6).
+`admin-core:write` and `admin-aggregator:write` let catalog managers save SKUs, set their prices and start the SKU
+sync job (golden SKU flow, ADR-0010 in `platform/docs/adr`); the services still check the role.
 
 ## Tokens
 
@@ -117,6 +121,8 @@ Every secret comes from an environment variable or a file in `/run/secrets` (Spr
 | `IDENTITY_JWT_ACTIVE_KEY_ID` | env |
 | `PRICE_SERVICE_CLIENT_SECRET` | Staff Identity. secret, an `{argon2id}` hash (below) |
 | `VALIDATION_SERVICE_CLIENT_SECRET` | Staff Identity. secret, an `{argon2id}` hash (below) |
+| `ADMIN_AGGREGATOR_SERVICE_CLIENT_SECRET` | Staff Identity. secret, an `{argon2id}` hash (below) |
+| `CLIENT_AGGREGATOR_SERVICE_CLIENT_SECRET` | Staff Identity. secret, an `{argon2id}` hash (below) |
 | `ADMIN_UI_REDIRECT_URIS` / `CLIENT_UI_REDIRECT_URIS` | env, the UIs' `/callback` addresses |
 | `ADMIN_UI_POST_LOGOUT_REDIRECT_URIS` / `CLIENT_UI_POST_LOGOUT_REDIRECT_URIS` | env, where the UIs return after signing out (their home pages, `http://localhost:3000/` and `:3001/` by default) |
 | `identity.cors.allowed-origins` | The UI's origin for this instance. Empty by default; `dev` allows `http://localhost:3000` and `:3001` (`IDENTITY_CORS_ALLOWED_ORIGINS`) |

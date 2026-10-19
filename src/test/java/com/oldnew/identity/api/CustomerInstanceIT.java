@@ -41,6 +41,8 @@ class CustomerInstanceIT {
         assertThat(clients.findByClientId("admin-ui")).isNull();
         assertThat(clients.findByClientId("price-service")).isNull();
         assertThat(clients.findByClientId("validation-service")).isNull();
+        assertThat(clients.findByClientId("admin-aggregator-service")).isNull();
+        assertThat(clients.findByClientId("client-aggregator-service")).isNull();
     }
 
     @Test

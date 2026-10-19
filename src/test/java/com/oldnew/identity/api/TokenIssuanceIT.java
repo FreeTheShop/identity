@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -100,11 +101,60 @@ class TokenIssuanceIT {
                 .contains("product-service");
     }
 
+    /** Price's Core Transactional: the price at checkout time, for Validation. */
+    @Test
+    void validationGetsAPriceTokenForCheckout() throws Exception {
+        SignedJWT token = clientCredentials("validation-service", "test-validation-secret", "price:internal");
+
+        assertThat(token.getJWTClaimsSet().getStringListClaim("scope")).containsExactly("price:internal");
+        assertThat(token.getJWTClaimsSet().getAudience()).contains("price-service").doesNotContain("product-service");
+    }
+
     /** The Admin UI asks for its aggregator's scope plus the scopes of the services the aggregator relays the token to. */
     @Test
     void adminUiMayAskForItsAggregatorAndWhatItCalls() {
         assertThat(clients.findByClientId("admin-ui").getScopes())
                 .contains("admin-aggregator:read", "admin-core:read", "product:read");
+    }
+
+    /** Golden SKU flow: catalog managers save SKUs in Admin Core and may start the SKU sync job now. */
+    @Test
+    void adminUiMayAskToSaveSkusAndRunTheSync() {
+        assertThat(clients.findByClientId("admin-ui").getScopes()).contains("admin-core:write", "admin-aggregator:write");
+    }
+
+    /** Golden SKU flow: the SKU sync job reads Admin Core's changes with its own token, and can do nothing else. */
+    @Test
+    void adminAggregatorReadsAdminCoreChanges() throws Exception {
+        SignedJWT token = clientCredentials("admin-aggregator-service", "test-admin-aggregator-secret", "admin-core:internal");
+
+        assertThat(token.getJWTClaimsSet().getStringListClaim("scope")).containsExactly("admin-core:internal");
+        assertThat(token.getJWTClaimsSet().getAudience()).containsExactlyInAnyOrder("admin-aggregator-service", "admin-core-service");
+        assertThat(clients.findByClientId("admin-aggregator-service").getScopes()).containsExactly("admin-core:internal");
+    }
+
+    /** Golden SKU flow: the Client aggregator reads a SKU from Product and writes its shop view to Client Core. */
+    @Test
+    void clientAggregatorReadsProductAndWritesClientCore() throws Exception {
+        SignedJWT token = clientCredentials("client-aggregator-service", "test-client-aggregator-secret",
+                "product:internal client-core:internal");
+
+        assertThat(token.getJWTClaimsSet().getStringListClaim("scope"))
+                .containsExactlyInAnyOrder("product:internal", "client-core:internal");
+        assertThat(token.getJWTClaimsSet().getAudience())
+                .containsExactlyInAnyOrder("client-aggregator-service", "product-service", "client-core-service");
+        assertThat(clients.findByClientId("client-aggregator-service").getScopes())
+                .containsExactlyInAnyOrder("product:internal", "client-core:internal");
+    }
+
+    @Test
+    void aggregatorsCannotWriteProducts() throws Exception {
+        mvc.perform(post("/oauth2/token")
+                        .with(httpBasic("client-aggregator-service", "test-client-aggregator-secret"))
+                        .param("grant_type", "client_credentials")
+                        .param("scope", "product:write"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_scope"));
     }
 
     private SignedJWT clientCredentials(String clientId, String secret, String scope) throws Exception {

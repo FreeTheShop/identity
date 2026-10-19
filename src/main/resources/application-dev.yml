@@ -2,6 +2,8 @@
 # The service clients' secrets (Staff Identity, application-staff.yml reads these). Environment variables win.
 PRICE_SERVICE_CLIENT_SECRET: "{noop}dev-price-secret"
 VALIDATION_SERVICE_CLIENT_SECRET: "{noop}dev-validation-secret"
+ADMIN_AGGREGATOR_SERVICE_CLIENT_SECRET: "{noop}dev-admin-aggregator-secret"
+CLIENT_AGGREGATOR_SERVICE_CLIENT_SECRET: "{noop}dev-client-aggregator-secret"
 server:
   servlet:
     session:

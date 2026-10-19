@@ -16,7 +16,9 @@ spring:
               # Sign out ends the Identity session at /connect/logout, then returns here (and only here).
               post-logout-redirect-uris: ${ADMIN_UI_POST_LOGOUT_REDIRECT_URIS:http://localhost:3000/}
               # The aggregator relays the user's token to Admin Core and Product, so the token needs their scopes too.
-              scopes: [openid, email, product:read, product:write, admin-aggregator:read, admin-core:read]
+              # admin-core:write saves SKU versions and prices; admin-aggregator:write starts the SKU sync job now (golden SKU flow).
+              scopes: [openid, email, product:read, product:write, admin-aggregator:read, admin-aggregator:write,
+                       admin-core:read, admin-core:write]
             require-proof-key: true
             require-authorization-consent: false              # first-party app
             token:
@@ -32,7 +34,7 @@ spring:
               # price:read: the service's own status check. Real callers of Price get it in Sprint 5.
               scopes: [product:internal, price:read]
             token:
-              access-token-time-to-live: 10m
+              access-token-time-to-live: 30m
           validation-service:
             registration:
               client-id: validation-service
@@ -40,7 +42,28 @@ spring:
               client-authentication-methods: [client_secret_basic]
               authorization-grant-types: [client_credentials]
               # validation:read: the service's own status check. Real callers of Validation get it in Sprint 6.
-              scopes: [product:internal, validation:read]
+              # price:internal: the price at checkout time (Price's Core Transactional), checked live against Product.
+              scopes: [product:internal, validation:read, price:internal]
+            token:
+              access-token-time-to-live: 30m
+          # Golden SKU flow: the SKU sync job reads Admin Core's changes.
+          admin-aggregator-service:
+            registration:
+              client-id: admin-aggregator-service
+              client-secret: ${ADMIN_AGGREGATOR_SERVICE_CLIENT_SECRET}
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              scopes: [admin-core:internal]
+            token:
+              access-token-time-to-live: 30m
+          # Golden SKU flow: reads a changed SKU from Product and stores its shop view in Client Core.
+          client-aggregator-service:
+            registration:
+              client-id: client-aggregator-service
+              client-secret: ${CLIENT_AGGREGATOR_SERVICE_CLIENT_SECRET}
+              client-authentication-methods: [client_secret_basic]
+              authorization-grant-types: [client_credentials]
+              scopes: [product:internal, client-core:internal]
             token:
               access-token-time-to-live: 10m
 server:

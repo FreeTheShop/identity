@@ -58,6 +58,8 @@ class StaffInstanceIT {
         assertThat(clients.findByClientId("admin-ui")).isNotNull();
         assertThat(clients.findByClientId("price-service")).isNotNull();
         assertThat(clients.findByClientId("validation-service")).isNotNull();
+        assertThat(clients.findByClientId("admin-aggregator-service")).isNotNull();
+        assertThat(clients.findByClientId("client-aggregator-service")).isNotNull();
         assertThat(clients.findByClientId("client-ui")).isNull();
     }
 
